@@ -1,0 +1,46 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    // 1. Buat array integer dengan panjang bebas dan nilai bebas
+    int arr[] = {10, 35, 26, 75, 80};
+    int n = sizeof(arr) / sizeof(arr[0]); // Hitung panjang array
+
+    int *ptr = arr; // Pointer ke elemen pertama array
+
+    // 2. Cetak semua elemen array menggunakan pointer (tanpa index)
+    cout << "Elemen array: ";
+    for (int i = 0; i < n; i++) {
+        cout << *(ptr + i) << " ";
+    }
+    cout << endl;
+
+    // 3. Cari nilai maksimum dan minimum menggunakan pointer
+    int maxVal = *ptr; // Awalnya anggap elemen pertama sebagai max
+    int minVal = *ptr; // Awalnya anggap elemen pertama sebagai min
+
+    for (int i = 1; i < n; i++) {
+        if (*(ptr + i) > maxVal) {
+            maxVal = *(ptr + i);
+        }
+        if (*(ptr + i) < minVal) {
+            minVal = *(ptr + i);
+        }
+    }
+
+    cout << "Nilai maksimum: " << maxVal << endl;
+    cout << "Nilai minimum: " << minVal << endl;
+
+    // 4. Cari jumlah dan rata-rata array menggunakan pointer
+    int sum = 0;
+    for (int i = 0; i < n; i++) {
+        sum += *(ptr + i);
+    }
+
+    double avg = (double)sum / n; // Konversi ke double untuk hasil yang akurat
+
+    cout << "Jumlah elemen: " << sum << endl;
+    cout << "Rata-rata: " << avg << endl;
+
+    return 0;
+}
