@@ -1,0 +1,197 @@
+#include <iostream>
+using namespace std;
+
+struct mahasiswa {
+    string nama;
+    int nim;
+    float ipk;
+};
+
+// Fungsi untuk membersihkan layar (clear screen)
+void clearScreen() {
+    system("cls"); // Untuk Windows
+}
+
+// Fungsi untuk menampilkan semua data mahasiswa
+void tampilkanData(mahasiswa *m, int totalData) {
+    cout << " - - - - Data Mahasiswa - - - - " << endl;
+    for (int i = 0; i < totalData; i++) {
+        cout << "Nama   : " << m[i].nama << ",\t\t"
+             << "NIM    : " << m[i].nim << ",\t\t"
+             << "IPK    : " << m[i].ipk << endl;
+        cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
+    }
+}
+
+// Fungsi untuk mencari mahasiswa berdasarkan NIM (Sequential Search)
+void cariByNIM(mahasiswa *m, int totalData) {
+    int nim;
+    cout << "Masukkan NIM yang ingin dicari: ";
+    cin >> nim;
+    bool ketemu = false;
+    for (int i = 0; i < totalData; i++) {
+        if (m[i].nim == nim) {
+            cout << "\nMahasiswa ditemukan." << endl;
+            cout << "Nama : " << m[i].nama << endl;
+            cout << "NIM : " << m[i].nim << endl;
+            cout << "IPK : " << m[i].ipk << endl;
+            ketemu = true;
+            break;
+        }
+    }
+    if (!ketemu) {
+        cout << "Data tidak ditemukan" << endl;
+    }
+}
+
+// Fungsi untuk mencari mahasiswa berdasarkan Nama (Binary Search)
+void cariByNama(mahasiswa *m, int totalData) {
+    string nama;
+    cout << "Masukkan Nama yang ingin dicari: ";
+    cin.ignore();
+    getline(cin, nama);
+
+    // Sorting nama secara ascending untuk Binary Search
+    for (int i = 0; i < totalData - 1; i++) {
+        for (int j = 0; j < totalData - i - 1; j++) {
+            if (m[j].nama > m[j + 1].nama) {
+                swap(m[j], m[j + 1]);
+            }
+        }
+    }
+
+    // Binary Search
+    int kiri = 0, kanan = totalData - 1;
+    bool ketemu = false;
+    while (kiri <= kanan) {
+        int tengah = kiri + (kanan - kiri) / 2;
+        if (m[tengah].nama == nama) {
+            int mulai = tengah;
+            while (mulai > 0 && m[mulai - 1].nama == nama) {
+                mulai--;
+            }
+            int akhir = tengah;
+            while (akhir < totalData - 1 && m[akhir + 1].nama == nama) {
+                akhir++;
+            }
+            for (int i = mulai; i <= akhir; i++) {
+                if (!ketemu) {
+                    cout << "\nMahasiswa ditemukan." << endl;
+                    ketemu = true;
+                }
+                cout << "\nData ke-" << i + 1 << endl;
+                cout << "Nama   : " << m[i].nama << endl;
+                cout << "NIM    : " << m[i].nim << endl;
+                cout << "IPK    : " << m[i].ipk << endl;
+            }
+            break;
+        } else if (m[tengah].nama < nama) {
+            kiri = tengah + 1;
+        } else {
+            kanan = tengah - 1;
+        }
+    }
+    if (!ketemu) {
+        cout << "\nData tidak ditemukan" << endl;
+    }
+}
+
+// Fungsi Quick Sort untuk mengurutkan IPK secara ascending
+void quickSortASC(mahasiswa *m, int low, int high) {
+    if (low < high) {
+        float pivot = m[high].ipk;
+        int i = low - 1;
+        for (int j = low; j < high; j++) {
+            if (m[j].ipk < pivot) {
+                i++;
+                swap(m[i], m[j]);
+            }
+        }
+        swap(m[i + 1], m[high]);
+        int pi = i + 1;
+        quickSortASC(m, low, pi - 1);
+        quickSortASC(m, pi + 1, high);
+    }
+}
+
+// Fungsi Bubble Sort untuk mengurutkan IPK secara descending
+void bubbleSortDESC(mahasiswa *m, int totalData) {
+    for (int i = 0; i < totalData - 1; i++) {
+        for (int j = 0; j < totalData - i - 1; j++) {
+            if (m[j].ipk < m[j + 1].ipk) {
+                swap(m[j], m[j + 1]);
+            }
+        }
+    }
+}
+
+int main() {
+    mahasiswa m[13] = {
+        {"Choi Seungcheol", 19950808, 3.75},
+        {"Yoon Jeonghan", 19951004, 3.80},
+        {"Hong Jisoo", 19951230, 3.70},
+        {"Wen Junhui", 19960610, 3.65},
+        {"Kwon Soonyoung", 19960615, 3.85},
+        {"Jeon Wonwoo", 19960717, 3.78},
+        {"Lee Jihoon", 19961122, 3.90},
+        {"Lee Seokmin", 19970218, 3.72},
+        {"Kim Mingyu", 19970406, 3.68},
+        {"Xu Minghao", 19971107, 3.88},
+        {"Boo Seungkwan", 19980116, 3.81},
+        {"Choi Hansol", 19980218, 3.79},
+        {"Lee Chan", 19991111, 3.83}
+    };
+    int totalData = 13;
+    int opsi;
+
+    do {
+        cout << "|| - - - - Menu Pilihan - - - - ||" << endl;
+        cout << " 1. Tampilkan Data Mahasiswa" << endl;
+        cout << " 2. Cari Data Berdasarkan NIM" << endl;
+        cout << " 3. Cari Data Berdasarkan Nama" << endl;
+        cout << " 4. Sorting IPK Mahasiswa (ASC)" << endl;
+        cout << " 5. Sorting IPK Mahasiswa (DESC)" << endl;
+        cout << " 6. Exit" << endl;
+        cout << "- - - - - - - - - - - - - - - - -" << endl;
+        cout << "\nPilihan Anda : ";
+        cin >> opsi;
+
+        clearScreen(); // Membersihkan layar setelah input
+
+        switch (opsi) {
+            case 1:
+                tampilkanData(m, totalData);
+                break;
+            case 2:
+                cariByNIM(m, totalData);
+                break;
+            case 3:
+                cariByNama(m, totalData);
+                break;
+            case 4:
+                quickSortASC(m, 0, totalData - 1);
+                cout << "Data telah diurutkan secara ascending berdasarkan IPK." << endl;
+                tampilkanData(m, totalData);
+                break;
+            case 5:
+                bubbleSortDESC(m, totalData);
+                cout << "Data telah diurutkan secara descending berdasarkan IPK." << endl;
+                tampilkanData(m, totalData);
+                break;
+            case 6:
+                cout << "Terima kasih, program selesai." << endl;
+                exit(0);
+            default:
+                cout << "Menu tidak tersedia" << endl;
+        }
+
+        // Membersihkan layar sebelum kembali ke menu
+        cout << "\nTekan Enter untuk kembali ke menu...";
+        cin.ignore();
+        cin.get();
+        clearScreen();
+
+    } while (opsi != 6);
+
+    return 0;
+}
