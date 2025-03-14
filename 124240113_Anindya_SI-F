@@ -1,0 +1,319 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+
+struct mahasiswa {
+    char nama[100], jurusan[100];
+    int nim, angkatan;
+    float ipk;
+};
+
+void clearScreen();
+int jumlahMahasiswa();
+void tambahMahasiswa();
+void tampilMahasiswa();
+void cariNIM();
+void cariJurusan();
+void updateIPK();
+void hapusMahasiswa();
+bool exitProgram();
+
+int main() {
+    int opsi;
+    do {
+        cout << "||- - - - Selamat Datang di SmartCampus++ - - - -||" << endl;
+        cout << "  1. Masukkan Data Mahasiswa" << endl;
+        cout << "  2. Tampilkan Data Mahasiswa" << endl;
+        cout << "  3. Cari Mahasiswa Berdasarkan NIM" << endl;
+        cout << "  4. Cari Mahasiswa Berdasarkan Jurusan" << endl;
+        cout << "  5. Perbarui IPK Mahasiswa" << endl;
+        cout << "  6. Hapus Data Mahasiswa" << endl;
+        cout << "  7. Exit" << endl;
+        cout << "- - - - - - - - - - - - - - - - - - - - - - - - - -" << endl;
+        cout << "Saat ini terdapat " << jumlahMahasiswa() << " data mahasiswa" << endl;
+        cout << "Silahkan pilih menu: ";
+        cin >> opsi;
+        clearScreen();
+        switch (opsi) {
+            case 1:
+                tambahMahasiswa();
+                break;
+            case 2:
+                tampilMahasiswa();
+                break;
+            case 3:
+                cariNIM();
+                break;
+            case 4:
+                cariJurusan();
+                break;
+            case 5:
+                updateIPK();
+                break;
+            case 6:
+                hapusMahasiswa();
+                break;
+            case 7:
+                if (exitProgram()) {
+                    cout << "Terima kasih telah menggunakan SmartCampus++! Semoga sukses dalam studi Anda!" << endl;
+                    return 0;
+                }
+                break;
+            default:
+                cout << "Menu Tidak Tersedia" << endl;
+                cout << "Tekan Enter untuk Kembali ke Menu" << endl;
+                cin.ignore();
+                cin.get();
+                clearScreen();
+        }
+    } while (opsi != 7);
+    return 0;
+}
+
+void clearScreen() {
+    system("cls");
+}
+
+int jumlahMahasiswa() {
+    FILE *file = fopen("MahasiswaData.dat", "rb");
+    if (file == NULL) {
+        return 0;
+    }
+    fseek(file, 0, SEEK_END);
+    int jumlah = ftell(file) / sizeof(mahasiswa);
+    fclose(file);
+    return jumlah;
+}
+
+void tambahMahasiswa() {
+    FILE *file = fopen("MahasiswaData.dat", "ab");
+    if (file == NULL) {
+        cout << "Error Saat Membuka File" << endl;
+        return;
+    }
+    mahasiswa mhs;
+    mhs.ipk = 0.0;
+    cout << "Masukkan NIM: ";
+    cin >> mhs.nim;
+    cout << "Masukkan Nama Mahasiswa: ";
+    cin.ignore();
+    cin.getline(mhs.nama, 100);
+    cout << "Masukkan Jurusan Mahasiswa: ";
+    cin.getline(mhs.jurusan, 100);
+    cout << "Masukkan Tahun Masuk Mahasiswa: ";
+    cin >> mhs.angkatan;
+    fwrite(&mhs, sizeof(mahasiswa), 1, file);
+    fclose(file);
+    cout << "Data Mahasiswa Berhasil Ditambahkan" << endl;
+}
+
+void tampilMahasiswa() {
+    FILE *file = fopen("MahasiswaData.dat", "rb");
+    if (file == NULL) {
+        cout << "Belum ada Data Mahasiswa yang Tersimpan" << endl;
+        return;
+    }
+    mahasiswa mhs[100];
+    int jumlahMhs = 0;
+    while (fread(&mhs[jumlahMhs], sizeof(mahasiswa), 1, file)) {
+        jumlahMhs++;
+    }
+    fclose(file);
+    // Bubble Sort
+    for (int i = 0; i < jumlahMhs - 1; i++) {
+        for (int j = 0; j < jumlahMhs - i - 1; j++) {
+            if (mhs[j].nim > mhs[j + 1].nim) {
+                swap(mhs[j], mhs[j + 1]);
+            }
+        }
+    }
+    cout << "- - - - - - - - - - - - - Data Mahasiswa - - - - - - - - - - - - -" << endl;
+    for (int i = 0; i < jumlahMhs; i++) {
+        cout << mhs[i].nim << ",\t\t"
+             << mhs[i].nama << ",\t\t"
+             << mhs[i].jurusan << ",\t\t"
+             << mhs[i].angkatan << ",\t\t"
+             << mhs[i].ipk << endl;
+    }
+    cout << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -" << endl;
+}
+
+void cariNIM() {
+    int nimTarget;
+    cout << "Masukkan NIM yang ingin Anda Cari: ";
+    cin >> nimTarget;
+    FILE *file = fopen("MahasiswaData.dat", "rb");
+    if (file == NULL) {
+        cout << "Belum ada Data Mahasiswa yang Tersimpan" << endl;
+        return;
+    }
+    mahasiswa mhs[100];
+    int jumlahMhs = 0;
+    while (fread(&mhs[jumlahMhs], sizeof(mahasiswa), 1, file)) {
+        jumlahMhs++;
+    }
+    fclose(file);
+    // Quick Sort
+    for (int i = 0; i < jumlahMhs - 1; i++) {
+        for (int j = 0; j < jumlahMhs - i - 1; j++) {
+            if (mhs[j].nim > mhs[j + 1].nim) {
+                swap(mhs[j], mhs[j + 1]);
+            }
+        }
+    }
+    // Binary Search
+    int low = 0, high = jumlahMhs - 1;
+    bool ditemukan = false;
+    int index = -1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (mhs[mid].nim == nimTarget) {
+            ditemukan = true;
+            index = mid;
+            break;
+        } else if (mhs[mid].nim < nimTarget) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    if (ditemukan) {
+        cout << "Data Mahasiswa Ditemukan:" << endl;
+        cout << "NIM: " << mhs[index].nim << endl;
+        cout << "Nama: " << mhs[index].nama << endl;
+        cout << "Jurusan: " << mhs[index].jurusan << endl;
+        cout << "Angkatan: " << mhs[index].angkatan << endl;
+        cout << "IPK: " << mhs[index].ipk << endl;
+    } else {
+        cout << "Data Mahasiswa dengan NIM " << nimTarget << " Tidak Ditemukan" << endl;
+    }
+}
+
+void cariJurusan() {
+    char jurusanTarget[100];
+    cout << "Masukkan Jurusan yang Ingin Anda Cari: ";
+    cin.ignore();
+    cin.getline(jurusanTarget, 100);
+    FILE *file = fopen("MahasiswaData.dat", "rb");
+    if (file == NULL) {
+        cout << "Belum ada Data Mahasiswa yang Tersimpan" << endl;
+        return;
+    }
+    mahasiswa mhs;
+    bool ditemukan = false;
+    cout << "Hasil Pencarian Mahasiswa dengan Jurusan " << jurusanTarget << ":" << endl;
+    while (fread(&mhs, sizeof(mahasiswa), 1, file)) {
+        if (strcmp(mhs.jurusan, jurusanTarget) == 0) {
+            ditemukan = true;
+            cout << "NIM: " << mhs.nim << ",\t\t"
+                 << "Nama: " << mhs.nama << ",\t\t"
+                 << "Jurusan: " << mhs.jurusan << ",\t\t"
+                 << "Angkatan: " << mhs.angkatan << ",\t\t"
+                 << "IPK: " << mhs.ipk << endl;
+        }
+    }
+    fclose(file);
+    if (!ditemukan) {
+        cout << "Mahasiswa dengan jurusan " << jurusanTarget << " tidak ditemukan!" << endl;
+    }
+}
+
+void updateIPK() {
+    int nimTarget;
+    cout << "Masukkan NIM yang Ingin Anda Perbarui IPK-nya: ";
+    cin >> nimTarget;
+    FILE *file = fopen("MahasiswaData.dat", "rb+");
+    if (file == NULL) {
+        cout << "Belum ada Data Mahasiswa yang Tersimpan" << endl;
+        return;
+    }
+    mahasiswa mhs;
+    bool ditemukan = false;
+    long int posisi = -1;
+    while (fread(&mhs, sizeof(mahasiswa), 1, file)) {
+        if (mhs.nim == nimTarget) {
+            ditemukan = true;
+            posisi = ftell(file) - sizeof(mahasiswa);
+            break;
+        }
+    }
+    if (ditemukan) {
+        cout << "Data Mahasiswa Ditemukan:" << endl;
+        cout << "NIM: " << mhs.nim << endl;
+        cout << "Nama: " << mhs.nama << endl;
+        cout << "Jurusan: " << mhs.jurusan << endl;
+        cout << "Angkatan: " << mhs.angkatan << endl;
+        cout << "IPK Saat Ini: " << mhs.ipk << endl;
+        float ipkBaru;
+        cout << "Masukkan IPK Baru (0.0 - 4.0): ";
+        cin >> ipkBaru;
+        if (ipkBaru < 0.0 || ipkBaru > 4.0) {
+            cout << "IPK tidak valid! Harus dalam rentang 0.0 - 4.0." << endl;
+        } else {
+            mhs.ipk = ipkBaru;
+            fseek(file, posisi, SEEK_SET);
+            fwrite(&mhs, sizeof(mahasiswa), 1, file);
+            cout << "IPK mahasiswa dengan NIM " << nimTarget << " berhasil diperbarui!" << endl;
+        }
+    } else {
+        cout << "Mahasiswa dengan NIM " << nimTarget << " tidak ditemukan!" << endl;
+    }
+    fclose(file);
+}
+
+void hapusMahasiswa() {
+    int nimTarget;
+    cout << "Masukkan NIM mahasiswa yang ingin dihapus: ";
+    cin >> nimTarget;
+    FILE *file = fopen("MahasiswaData.dat", "rb");
+    if (file == NULL) {
+        cout << "Belum ada Data Mahasiswa yang Tersimpan" << endl;
+        return;
+    }
+    mahasiswa mhs[100];
+    int jumlahMhs = 0;
+    bool ditemukan = false;
+    while (fread(&mhs[jumlahMhs], sizeof(mahasiswa), 1, file)) {
+        jumlahMhs++;
+    }
+    fclose(file);
+    for (int i = 0; i < jumlahMhs; i++) {
+        if (mhs[i].nim == nimTarget) {
+            ditemukan = true;
+            for (int j = i; j < jumlahMhs - 1; j++) {
+                mhs[j] = mhs[j + 1];
+            }
+            jumlahMhs--;
+            break;
+        }
+    }
+    if (ditemukan) {
+        file = fopen("MahasiswaData.dat", "wb");
+        if (file == NULL) {
+            cout << "Error saat membuka file untuk penulisan" << endl;
+            return;
+        }
+        for (int i = 0; i < jumlahMhs; i++) {
+            fwrite(&mhs[i], sizeof(mahasiswa), 1, file);
+        }
+        fclose(file);
+        cout << "Mahasiswa dengan NIM " << nimTarget << " berhasil dihapus!" << endl;
+    } else {
+        cout << "Mahasiswa dengan NIM " << nimTarget << " tidak ditemukan!" << endl;
+    }
+}
+
+bool exitProgram() {
+    char keluar;
+    do {
+        cout << "Apakah Anda Ingin Keluar dari SmartCampus++? (y/n): ";
+        cin >> keluar;
+        if (keluar == 'y' || keluar == 'Y') {
+            return true;
+        } else if (keluar == 'n' || keluar == 'N') {
+            return false;
+        } else {
+            cout << "Input Tidak Valid! Masukkan 'y' atau 'n'" << endl;
+        }
+    } while (true);
+}
