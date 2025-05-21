@@ -1,0 +1,251 @@
+#include <iostream>
+#include <cstdlib>
+using namespace std;
+
+struct Pesanan
+{
+    string nama;
+    string jenis_roti;
+    int total_harga;
+    Pesanan *next;
+};
+
+Pesanan *head = NULL;
+Pesanan *tail = NULL;
+Pesanan *history = NULL;
+
+void clearScreen()
+{
+    system("cls");
+}
+
+void tampilHeader(string judul)
+{
+    cout << "==============================\n";
+    cout << "    Toko Roti Manis Lezat    \n";
+    cout << "==============================\n";
+    cout << ">> " << judul << "\n\n";
+}
+
+Pesanan *buatPesanan()
+{
+    Pesanan *baru = new Pesanan;
+
+    cout << "Masukkan nama pembeli      : ";
+    getline(cin, baru->nama);
+    if (baru->nama.empty())
+    {
+        cout << "Nama tidak boleh kosong!\n";
+        delete baru;
+        return NULL;
+    }
+
+    cout << "Masukkan jenis roti        : ";
+    getline(cin, baru->jenis_roti);
+    if (baru->jenis_roti.empty())
+    {
+        cout << "Jenis roti tidak boleh kosong!\n";
+        delete baru;
+        return NULL;
+    }
+
+    cout << "Masukkan total harga (Rp)  : ";
+    cin >> baru->total_harga;
+    if (cin.fail() || baru->total_harga <= 0)
+    {
+        cout << "Harga tidak valid! Harus angka positif.\n";
+        cin.clear();
+        cin.ignore(10000, '\n');
+        delete baru;
+        return NULL;
+    }
+
+    cin.ignore();
+    baru->next = NULL;
+    return baru;
+}
+
+void ambilAntrean()
+{
+    clearScreen();
+    tampilHeader("Ambil Antrean");
+    Pesanan *baru = buatPesanan();
+    if (baru == NULL)
+    {
+        cout << "\nPesanan tidak ditambahkan ke antrean.\n";
+        system("pause");
+        return;
+    }
+
+    if (head == NULL)
+    {
+        head = tail = baru;
+    }
+    else
+    {
+        tail->next = baru;
+        tail = baru;
+    }
+
+    cout << "\nPesanan berhasil ditambahkan ke antrean.\n";
+    system("pause");
+}
+
+void layaniPembeli()
+{
+    clearScreen();
+    tampilHeader("Layani Pembeli");
+
+    if (head == NULL)
+    {
+        cout << "Tidak ada pesanan dalam antrean.\n";
+    }
+    else
+    {
+        Pesanan *dilayani = head;
+        head = head->next;
+        if (head == NULL)
+            tail = NULL;
+
+        // Masukkan ke riwayat (stack)
+        dilayani->next = history;
+        history = dilayani;
+
+        cout << "Pesanan atas nama " << dilayani->nama << " telah dilayani.\n";
+    }
+    system("pause");
+}
+
+void tampilkanAntrean()
+{
+    clearScreen();
+    tampilHeader("Daftar Antrean");
+
+    if (head == NULL)
+    {
+        cout << "Belum ada pesanan dalam antrean.\n";
+    }
+    else
+    {
+        Pesanan *temp = head;
+        int no = 1;
+        while (temp != NULL)
+        {
+            cout << no++ << ". " << temp->nama
+                 << " | Roti: " << temp->jenis_roti
+                 << " | Total: Rp" << temp->total_harga << "\n";
+            temp = temp->next;
+        }
+    }
+    system("pause");
+}
+
+void batalkanPesanan()
+{
+    clearScreen();
+    tampilHeader("Batalkan Pesanan");
+
+    if (head == NULL)
+    {
+        cout << "Tidak ada pesanan untuk dibatalkan.\n";
+    }
+    else if (head == tail)
+    {
+        delete head;
+        head = tail = NULL;
+        cout << "Pesanan terakhir berhasil dibatalkan.\n";
+    }
+    else
+    {
+        Pesanan *temp = head;
+        while (temp->next != tail)
+        {
+            temp = temp->next;
+        }
+        delete tail;
+        tail = temp;
+        tail->next = NULL;
+        cout << "Pesanan terakhir berhasil dibatalkan.\n";
+    }
+    system("pause");
+}
+
+void tampilkanHistory()
+{
+    clearScreen();
+    tampilHeader("Riwayat Pesanan");
+
+    if (history == NULL)
+    {
+        cout << "Belum ada pesanan yang dilayani.\n";
+    }
+    else
+    {
+        Pesanan *temp = history;
+        int no = 1;
+        while (temp != NULL)
+        {
+            cout << no++ << ". " << temp->nama
+                 << " | Roti: " << temp->jenis_roti
+                 << " | Total: Rp" << temp->total_harga << "\n";
+            temp = temp->next;
+        }
+    }
+    system("pause");
+}
+
+int main()
+{
+    int pilihan;
+    do
+    {
+        clearScreen();
+        tampilHeader("Menu Utama");
+
+        cout << "1. Ambil Antrean\n";
+        cout << "2. Layani Pembeli\n";
+        cout << "3. Tampilkan Daftar Antrean\n";
+        cout << "4. Batalkan Pesanan Terakhir\n";
+        cout << "5. Tampilkan History Pesanan\n";
+        cout << "6. Keluar\n";
+        cout << "------------------------------\n";
+        cout << "Pilih menu (1-6): ";
+        cin >> pilihan;
+        cin.ignore();
+
+        switch (pilihan)
+        {
+        case 1:
+            ambilAntrean();
+            break;
+        case 2:
+            layaniPembeli();
+            break;
+        case 3:
+            tampilkanAntrean();
+            break;
+        case 4:
+            batalkanPesanan();
+            break;
+        case 5:
+            tampilkanHistory();
+            break;
+        case 6:
+        {
+            char konfirmasi;
+            cout << "\nApakah kamu yakin ingin keluar? (y/n): ";
+            cin >> konfirmasi;
+            if (konfirmasi == 'y' || konfirmasi == 'Y')
+            {
+                cout << "\nTerima kasih telah menggunakan sistem antrean!\n";
+                exit(0);
+            }
+            break;
+        }
+        default:
+            cout << "Pilihan tidak valid. Coba lagi.\n";
+            system("pause");
+        }
+    } while (true);
+    return 0;
+}
