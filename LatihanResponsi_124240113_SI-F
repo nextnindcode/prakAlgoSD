@@ -1,0 +1,281 @@
+#include <iostream>
+#include <string>
+#include <queue>
+#include <stack>
+#include <limits>
+using namespace std;
+
+// Struktur data Video dengan pointer kiri-kanan (BST)
+typedef struct Video
+{
+    string judul;
+    int durasi;
+    string status; // tersedia, dalam antrean, sedang diputar
+    Video *left = nullptr, *right = nullptr;
+    Video(string j, int d) : judul(j), durasi(d), status("tersedia") {} // konstruktor
+} Video;
+
+// Deklarasi global
+Video *root = nullptr;                 // root dari BST video
+queue<Video *> playlist;               // antrean playlist video
+stack<Video *> riwayat;                // tumpukan riwayat tontonan
+stack<pair<string, string>> undoStack; // tumpukan undo (aksi, judul)
+
+// mencari node terkecil (paling kiri) dalam BST
+Video *findMin(Video *node)
+{
+    while (node && node->left)
+        node = node->left;
+    return node;
+}
+
+// menambah video ke BST
+Video *insertVideo(Video *node, string judul, int durasi)
+{
+    if (!node)
+    {
+        undoStack.push({"add", judul}); // catat untuk undo
+        cout << "Video \"" << judul << "\" berhasil ditambahkan.\n";
+        return new Video(judul, durasi);
+    }
+    if (judul < node->judul)
+        node->left = insertVideo(node->left, judul, durasi);
+    else if (judul > node->judul)
+        node->right = insertVideo(node->right, judul, durasi);
+    else
+        cout << "Judul sudah ada, gagal menambah.\n";
+    return node;
+}
+
+// enampilkan daftar video (in-order)
+void tampilkanVideo(Video *node)
+{
+    if (!node)
+        return;
+    tampilkanVideo(node->left);
+    cout << "Judul: " << node->judul << " | Durasi: " << node->durasi << " menit | Status: " << node->status << '\n';
+    tampilkanVideo(node->right);
+}
+
+// mencari video berdasarkan judul
+Video *cariVideo(Video *node, string judul)
+{
+    if (!node || node->judul == judul)
+        return node;
+    return (judul < node->judul) ? cariVideo(node->left, judul) : cariVideo(node->right, judul);
+}
+
+// menghapus video dari BST
+Video *hapusVideo(Video *node, string judul)
+{
+    if (!node)
+        return nullptr;
+    if (judul < node->judul)
+        node->left = hapusVideo(node->left, judul);
+    else if (judul > node->judul)
+        node->right = hapusVideo(node->right, judul);
+    else
+    {
+        if (!node->left)
+        {
+            Video *temp = node->right;
+            delete node;
+            return temp;
+        }
+        if (!node->right)
+        {
+            Video *temp = node->left;
+            delete node;
+            return temp;
+        }
+        Video *temp = findMin(node->right);
+        node->judul = temp->judul;
+        node->durasi = temp->durasi;
+        node->status = temp->status;
+        node->right = hapusVideo(node->right, temp->judul);
+    }
+    return node;
+}
+
+// menambah video ke playlist
+void tambahPlaylist(Video *v)
+{
+    if (v->status != "tersedia")
+    {
+        cout << "Video sudah di playlist atau sedang diputar.\n";
+        return;
+    }
+    v->status = "dalam antrean";
+    playlist.push(v);
+    undoStack.push({"playlist", v->judul}); // catat undo
+    cout << "Video \"" << v->judul << "\" berhasil ditambahkan ke playlist.\n";
+    if (playlist.size() == 1)
+    {
+        v->status = "sedang diputar";
+        cout << "Sekarang memutar: " << v->judul << '\n';
+    }
+}
+
+// menonton video dari playlist
+void tontonVideo()
+{
+    if (playlist.empty())
+    {
+        cout << "Tidak ada video di playlist.\n";
+        return;
+    }
+    Video *v = playlist.front();
+    playlist.pop();
+    cout << "Selesai menonton: " << v->judul << " (" << v->durasi << " menit)\n";
+    v->status = "tersedia";
+    riwayat.push(new Video(*v));
+    undoStack.push({"watch", v->judul});
+    if (!playlist.empty())
+    {
+        playlist.front()->status = "sedang diputar";
+        cout << "Sekarang memutar: " << playlist.front()->judul << '\n';
+    }
+}
+
+// menampilkan riwayat tontonan
+void tampilkanRiwayat()
+{
+    if (riwayat.empty())
+    {
+        cout << "(Kosong)\n";
+        return;
+    }
+    stack<Video *> temp = riwayat;
+    int no = 1;
+    while (!temp.empty())
+    {
+        cout << no++ << ". Judul: " << temp.top()->judul << " | Durasi: " << temp.top()->durasi << " menit\n";
+        temp.pop();
+    }
+}
+
+// undo aksi terakhir
+void undo()
+{
+    if (undoStack.empty())
+    {
+        cout << "Tidak ada aksi untuk di-undo.\n";
+        return;
+    }
+    auto [aksi, judul] = undoStack.top();
+    undoStack.pop();
+
+    if (aksi == "add")
+    {
+        root = hapusVideo(root, judul);
+        cout << "Undo: tambah video \"" << judul << "\" dibatalkan.\n";
+    }
+    else if (aksi == "delete")
+    {
+        root = insertVideo(root, judul, 0);
+        cout << "Undo: hapus video \"" << judul << "\" dibatalkan.\n";
+    }
+    else if (aksi == "playlist")
+    {
+        queue<Video *> tempQueue;
+        while (!playlist.empty())
+        {
+            Video *v = playlist.front();
+            playlist.pop();
+            if (v->judul == judul)
+                v->status = "tersedia";
+            else
+                tempQueue.push(v);
+        }
+        playlist = tempQueue;
+        cout << "Undo: video \"" << judul << "\" dibatalkan dari playlist.\n";
+    }
+    else if (aksi == "watch")
+    {
+        if (!riwayat.empty() && riwayat.top()->judul == judul)
+        {
+            Video *v = riwayat.top();
+            riwayat.pop();
+            v->status = "sedang diputar";
+            playlist.push(v);
+            cout << "Undo: video \"" << judul << "\" dikembalikan ke playlist.\n";
+        }
+    }
+}
+
+int main()
+{
+    int pilihan;
+    string judul;
+    int durasi;
+
+    do
+    {
+        system("cls");
+        cout << "=== IDLIX Tube ===\n"
+             << "1. Tambah Video\n"
+             << "2. Tampilkan Daftar Video\n"
+             << "3. Tambahkan ke Playlist\n"
+             << "4. Tonton Video\n"
+             << "5. Riwayat Tontonan\n"
+             << "6. Hapus Video\n"
+             << "7. Undo Tindakan Terakhir\n"
+             << "0. Keluar\nPilih: ";
+        cin >> pilihan;
+
+        if (cin.fail())
+        {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Input tidak valid, masukkan angka!\n";
+            system("pause");
+            continue;
+        }
+        cin.ignore();
+
+        switch (pilihan)
+        {
+        case 1:
+            cout << "Judul: ";
+            getline(cin, judul);
+            cout << "Durasi (menit): ";
+            cin >> durasi;
+            root = insertVideo(root, judul, durasi);
+            break;
+        case 2:
+            tampilkanVideo(root);
+            break;
+        case 3:
+            cout << "Judul yang akan ditambahkan ke playlist: ";
+            getline(cin, judul);
+            if (Video *v = cariVideo(root, judul))
+                tambahPlaylist(v);
+            else
+                cout << "Video tidak ditemukan.\n";
+            break;
+        case 4:
+            tontonVideo();
+            break;
+        case 5:
+            tampilkanRiwayat();
+            break;
+        case 6:
+            cout << "Judul video yang akan dihapus: ";
+            getline(cin, judul);
+            root = hapusVideo(root, judul);
+            undoStack.push({"delete", judul});
+            break;
+        case 7:
+            undo();
+            break;
+        case 0:
+            cout << "Keluar dari program.\n";
+            break;
+        default:
+            cout << "Pilihan tidak valid!\n";
+        }
+        system("pause");
+    } while (pilihan != 0);
+
+    return 0;
+}
