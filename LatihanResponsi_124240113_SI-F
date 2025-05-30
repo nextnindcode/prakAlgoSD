@@ -244,6 +244,20 @@ int main()
             break;
         case 2:
             tampilkanVideo(root);
+            char jawab;
+            cout << "Apakah Anda ingin mencari video (y/t)? ";
+            cin >> jawab;
+            cin.ignore();
+            if (jawab == 'y' || jawab == 'Y')
+            {
+                cout << "Masukkan judul video: ";
+                getline(cin, judul);
+                Video *v = cariVideo(root, judul);
+                if (v)
+                    cout << "Video ditemukan: " << v->judul << ", durasi " << v->durasi << " menit, status " << v->status << endl;
+                else
+                    cout << "Video tidak ditemukan.\n";
+            }
             break;
         case 3:
             cout << "Judul yang akan ditambahkan ke playlist: ";
